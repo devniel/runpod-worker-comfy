@@ -17,6 +17,10 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
     && ln -sf /usr/bin/python3.10 /usr/bin/python \
     && ln -sf /usr/bin/pip3 /usr/bin/pip
 
@@ -42,14 +46,23 @@ ADD src/extra_model_paths.yaml ./
 WORKDIR /
 
 # Add scripts
-ADD src/start.sh src/restore_snapshot.sh src/rp_handler.py test_input.json ./
-RUN chmod +x /start.sh /restore_snapshot.sh
+ADD src/start.sh src/restore_snapshot.sh src/install_custom_nodes.sh src/post_install.sh src/rp_handler.py test_input.json ./
+RUN chmod +x /start.sh /restore_snapshot.sh /install_custom_nodes.sh /post_install.sh
 
 # Optionally copy the snapshot file
 ADD *snapshot*.json /
 
+# Copy custom_nodes.txt
+ADD custom_nodes.txt /
+
 # Restore the snapshot to install custom nodes
 RUN /restore_snapshot.sh
+
+# Install custom nodes if custom_nodes.txt exists
+RUN /install_custom_nodes.sh
+
+# Run post install script
+RUN /post_install.sh
 
 # Start container
 CMD ["/start.sh"]
